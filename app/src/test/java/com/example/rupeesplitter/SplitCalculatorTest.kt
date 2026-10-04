@@ -31,6 +31,12 @@ class SplitCalculatorTest {
     fun `sub rupee amount is kept as exact paise`() = assertSplit("0.01", "0", "1", "1")
 
     @Test
+    fun `decimal-only input does not require a leading zero`() {
+        assertSplit(".50", "0", "50", "1")
+        assertSplit(".68", "0", "68", "1")
+    }
+
+    @Test
     fun `valid required Indian formats are accepted`() {
         listOf("1", "5", "100", "1998", "1,00,000", "10,00,000", "1,00,00,000").forEach { input ->
             assertTrue("$input should calculate", calculator.calculate(input) is CalculationState.Success)
@@ -78,7 +84,7 @@ class SplitCalculatorTest {
     fun `large shared breakdown is compact`() {
         val text = BreakdownTextFormatter.format(success("1,00,00,000"), BigInteger("200"))
         assertTrue(text.contains("₹1,999 Portions: 5,002"))
-        assertTrue(text.contains("Detailed rows are compacted for large results."))
+        assertTrue(text.contains("Detailed rows are compacted for large results"))
         assertFalse(text.contains("Payment 1:"))
     }
 

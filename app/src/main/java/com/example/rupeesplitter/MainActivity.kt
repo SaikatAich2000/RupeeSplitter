@@ -21,7 +21,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -46,15 +48,18 @@ class MainActivity : AppCompatActivity() {
     private var lastSignature: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        applySavedTheme()
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         applySystemBarStyle()
         applyWindowInsets()
+        refreshThemeToggle()
 
         setupQuickAmounts()
         setupInput()
         setupActions()
+        setupThemeToggle()
 
         val restored = savedInstanceState?.getString(STATE_AMOUNT).orEmpty()
         if (restored.isNotEmpty()) {
@@ -131,6 +136,45 @@ class MainActivity : AppCompatActivity() {
             binding.quickRow.addView(pill(value), pillParams())
         }
     }
+
+    private fun setupThemeToggle() {
+        binding.themeToggle.setOnClickListener {
+            val dark = !isDarkThemeActive()
+            themePrefs.edit(commit = true) { putBoolean(THEME_IS_DARK_KEY, dark) }
+            AppCompatDelegate.setDefaultNightMode(
+                if (dark) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+            )
+        }
+    }
+
+    private fun applySavedTheme() {
+        val dark = if (themePrefs.contains(THEME_IS_DARK_KEY)) {
+            themePrefs.getBoolean(THEME_IS_DARK_KEY, false)
+        } else {
+            isDarkThemeActive()
+        }
+        AppCompatDelegate.setDefaultNightMode(
+            if (dark) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+        )
+    }
+
+    private fun refreshThemeToggle() {
+        val dark = isDarkThemeActive()
+        binding.themeToggle.setImageResource(
+            if (dark) R.drawable.ic_theme_sun else R.drawable.ic_theme_moon
+        )
+        binding.themeToggle.contentDescription = getString(
+            if (dark) R.string.a11y_theme_switch_to_light else R.string.a11y_theme_switch_to_dark
+        )
+    }
+
+    private fun isDarkThemeActive(): Boolean {
+        return (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_YES
+    }
+
+    private val themePrefs
+        get() = getSharedPreferences(THEME_PREFS_NAME, Context.MODE_PRIVATE)
 
     private fun setupActions() {
         binding.calculateButton.setOnClickListener {
@@ -406,6 +450,8 @@ class MainActivity : AppCompatActivity() {
         const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
         const val STATE_AMOUNT = "state_amount"
         const val ANIM_DURATION_MS = 250L
+        const val THEME_PREFS_NAME = "rupee_splitter_settings"
+        const val THEME_IS_DARK_KEY = "theme_is_dark"
         val DETAIL_ROW_LIMIT: BigInteger = BigInteger("100")
         val COPY_DETAIL_LIMIT: BigInteger = BigInteger("200")
         val QUICK_AMOUNTS = listOf("1,999", "5,000", "10,000", "25,000", "50,000", "1,00,000")

@@ -11,4 +11,19 @@ local.properties
 .kotlin/
 build/
 app/build/
+captures/
+.cxx/
+externalNativeBuild/
+
+# Packaged app artifacts
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Signing material — never commit a keystore
+*.jks
+*.keystore
+keystore.properties
+
 

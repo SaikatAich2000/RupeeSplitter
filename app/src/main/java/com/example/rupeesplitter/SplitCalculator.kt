@@ -13,7 +13,7 @@ class SplitCalculator {
         if (cleaned.isEmpty()) return CalculationState.Empty
         if (!isWellFormedAmount(cleaned)) return CalculationState.Invalid
 
-        val paise = BigDecimal(cleaned.replace(",", "")).movePointRight(2).toBigIntegerExact()
+        val paise = BigDecimal(normalizeAmount(cleaned)).movePointRight(2).toBigIntegerExact()
         if (paise.signum() == 0) return CalculationState.Zero
 
         val (fullPortions, remainder) = paise.divideAndRemainder(CHUNK_PAISE)
@@ -34,9 +34,14 @@ class SplitCalculator {
 
         private const val MAX_INPUT_LENGTH = 104
         private val WHITESPACE = Regex("""\s+""")
-        private val PLAIN_AMOUNT_PATTERN = Regex("""^\d+(?:\.\d{1,2})?$""")
+        private val PLAIN_AMOUNT_PATTERN = Regex("""^(\d+(?:\.\d{1,2})?|\.\d{1,2})$""")
         // Indian grouping: 10,000; 1,00,000; 1,00,00,000.
         private val INDIAN_GROUPED_AMOUNT_PATTERN = Regex("""^\d{1,3}(?:,\d{2})*,\d{3}(?:\.\d{1,2})?$""")
+
+        private fun normalizeAmount(value: String): String {
+            val digits = value.replace(",", "")
+            return if (digits.startsWith(".")) "0$digits" else digits
+        }
 
         private fun isWellFormedAmount(value: String): Boolean =
             value.length <= MAX_INPUT_LENGTH &&

@@ -18,7 +18,7 @@ object BreakdownTextFormatter {
             } else {
                 appendLine("${RupeeFormatter.money(SplitCalculator.CHUNK_PAISE)} Portions: ${RupeeFormatter.count(result.fullPortions)}")
                 appendLine("Remaining: ${RupeeFormatter.money(result.remainderPaise)}")
-                appendLine("Detailed rows are compacted for large results.")
+                appendLine("Detailed rows are compacted for large results")
             }
 
             appendLine()
