@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The calculator intentionally does not retain user input or app data in backups. -->
+<full-backup-content>
+    <exclude domain="root" path="." />
+</full-backup-content>

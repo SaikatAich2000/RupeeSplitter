@@ -1,0 +1,19 @@
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# Local Android SDK configuration
+local.properties
+
+# Gradle and build output
+.gradle/
+.kotlin/
+build/
+app/build/
+
+# Temporary local verification artifacts
+.verification/
+
+# Local scratch files (generated while validating)
+_*.txt
+README.md.new

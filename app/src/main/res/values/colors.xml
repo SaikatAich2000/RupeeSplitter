@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary -->
+    <color name="primary">#3D4CFF</color>
+    <color name="primary_variant">#2A3AE0</color>
+    <color name="primary_container">#E8EBFF</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="on_primary_container">#000A4A</color>
+
+    <!-- Secondary -->
+    <color name="secondary">#006A6C</color>
+    <color name="secondary_container">#97F0F2</color>
+    <color name="on_secondary">#FFFFFF</color>
+    <color name="on_secondary_container">#002021</color>
+
+    <!-- Tertiary -->
+    <color name="tertiary">#7A5500</color>
+    <color name="tertiary_container">#FFDDB3</color>
+    <color name="on_tertiary">#FFFFFF</color>
+    <color name="on_tertiary_container">#281800</color>
+
+    <!-- Error -->
+    <color name="error">#BA1A1A</color>
+    <color name="error_container">#FFDAD6</color>
+    <color name="on_error">#FFFFFF</color>
+    <color name="on_error_container">#410002</color>
+
+    <!-- Surface -->
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_variant">#E0E2EC</color>
+    <color name="on_surface">#1A1C1E</color>
+    <color name="on_surface_variant">#44474C</color>
+
+    <!-- Background -->
+    <color name="background">#F5F7FB</color>
+    <color name="on_background">#1A1C1E</color>
+
+    <!-- Outline -->
+    <color name="outline">#74777C</color>
+    <color name="outline_variant">#C4C7CC</color>
+
+    <!-- Components -->
+    <color name="input_bg">#FCFCFE</color>
+    <color name="chip_bg">#E8EBFF</color>
+    <color name="stroke">#D9DEEA</color>
+    <color name="ripple">#243D4CFF</color>
+
+    <!-- Text -->
+    <color name="text_primary">#121826</color>
+    <color name="text_secondary">#667085</color>
+    <color name="text_tertiary">#98A2B3</color>
+
+    <!-- Brand gradient -->
+    <color name="gradient_start">#5566FF</color>
+    <color name="gradient_end">#2A2FD8</color>
+    <color name="on_gradient">#FFFFFF</color>
+</resources>
