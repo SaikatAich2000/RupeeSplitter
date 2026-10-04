@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="app/src/main/res/drawable/ic_logo.xml" width="112" alt="Rupee Splitter logo" />
+  <img src="logo.svg" width="112" alt="Rupee Splitter logo" />
 
 # Rupee Splitter
 

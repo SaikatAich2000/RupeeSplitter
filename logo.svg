@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108" role="img" aria-label="Rupee Splitter logo">
+  <defs>
+    <linearGradient id="brand" x1="12" y1="12" x2="96" y2="96" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5566FF" />
+      <stop offset="1" stop-color="#2A2FD8" />
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded-square background with the brand gradient -->
+  <path fill="url(#brand)" d="M38,12 L70,12 A26,26 0 0 1 96,38 L96,70 A26,26 0 0 1 70,96 L38,96 A26,26 0 0 1 12,70 L12,38 A26,26 0 0 1 38,12 Z" />
+
+  <!-- Rupee symbol -->
+  <path fill="#FFFFFF" d="M24,30 h34 v9 h-34 z" />
+  <path fill="#FFFFFF" d="M24,47 h34 v9 h-34 z" />
+  <path fill="#FFFFFF" d="M24,30 h9 v52 h-9 z" />
+  <path fill="#FFFFFF" d="M33,56 h7 l16,26 h-9 z" />
+
+  <!-- Three split portions, decreasing in width -->
+  <path fill="#FFFFFF" fill-opacity="0.95" d="M68,34 h14 a4,4 0 0 1 4,4 v2 a4,4 0 0 1 -4,4 h-14 a4,4 0 0 1 -4,-4 v-2 a4,4 0 0 1 4,-4 z" />
+  <path fill="#FFFFFF" fill-opacity="0.8" d="M68,49 h8 a4,4 0 0 1 4,4 v2 a4,4 0 0 1 -4,4 h-8 a4,4 0 0 1 -4,-4 v-2 a4,4 0 0 1 4,-4 z" />
+  <path fill="#FFFFFF" fill-opacity="0.65" d="M68,64 h2 a4,4 0 0 1 4,4 v2 a4,4 0 0 1 -4,4 h-2 a4,4 0 0 1 -4,-4 v-2 a4,4 0 0 1 4,-4 z" />
+</svg>
