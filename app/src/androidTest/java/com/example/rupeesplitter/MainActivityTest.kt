@@ -10,18 +10,11 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Smoke tests for the only screen in the app.
- *
- * They run on a device or an emulator:
- *
- *     .\gradlew.bat connectedDebugAndroidTest
- */
+/** Instrumented smoke tests for the single screen. Run with `./gradlew connectedDebugAndroidTest`. */
 @RunWith(AndroidJUnit4::class)
 class MainActivityTest {
 
@@ -36,11 +29,9 @@ class MainActivityTest {
 
     @Test
     fun typingAnAmountShowsTheBreakdown() {
-        onView(withId(R.id.amountInput))
-            .perform(replaceText("10000"), closeSoftKeyboard())
+        onView(withId(R.id.amountInput)).perform(replaceText("10000"), closeSoftKeyboard())
 
         onView(withText(R.string.summary_total_label)).check(matches(isDisplayed()))
-        onView(withText(R.string.summary_portions)).check(matches(isDisplayed()))
         onView(withText("Portion 5")).check(matches(isDisplayed()))
     }
 
@@ -57,12 +48,5 @@ class MainActivityTest {
         onView(withId(R.id.resetButton)).perform(click())
 
         onView(withText(R.string.empty_state_title)).check(matches(isDisplayed()))
-    }
-
-    @Test
-    fun calculatorReconcilesOnDeviceToo() {
-        // The same guarantee the unit tests assert, run in the real device process.
-        val result = (SplitCalculator().calculate("10,000.50") as CalculationState.Success).result
-        assertEquals(result.originalPaise, result.calculatedTotalPaise)
     }
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 12+ backup and device-transfer policy: exclude all app data. -->
+<!-- Android 12+: exclude all app data from cloud backup and device transfer. -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="root" path="." />

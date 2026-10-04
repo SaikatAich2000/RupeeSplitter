@@ -100,8 +100,8 @@ No rounding, no drift, no floating-point surprises — even for amounts with 100
   changes, not on every keystroke.
 - **Bounded lists.** Up to 100 detailed rows are shown; very large splits switch to a
   compact summary so the UI never freezes.
-- **No allocation in the hot path.** Parsing reuses pre-compiled `Regex` patterns.
-- **Lean dependencies.** Only AndroidX Core, AppCompat, Material and ConstraintLayout
+- **Efficient parsing.** Pre-compiled `Regex` patterns avoid recompiling validation rules.
+- **Lean dependencies.** Only AndroidX Core, AppCompat and Material
   are used — the release build is R8-minified and resource-shrunk.
 
 ## Testing strategy
@@ -111,4 +111,4 @@ No rounding, no drift, no floating-point surprises — even for amounts with 100
 | Unit | `app/src/test/java/...` | Splitting, parsing, formatting, reconciliation |
 | Instrumented | `app/src/androidTest/java/...` | Launch and basic interaction |
 
-Every unit test also asserts **reconciliation**: `portions × ₹1,999 + remainder == original`.
+Every successful-split test also asserts **reconciliation**: `portions × ₹1,999 + remainder == original`.

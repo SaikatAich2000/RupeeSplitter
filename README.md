@@ -7,7 +7,7 @@
 
 Fast · Private · 100% offline · No account · No internet · No ads
 
-[Features](#features) · [How it works](#how-it-works) · [Run it](#run-it) · [Testing](#testing) · [Docs](docs/ARCHITECTURE.md)
+[Features](#features) · [How it works](#how-it-works) · [Build and run](#build-and-run) · [Testing](#testing) · [Docs](docs/ARCHITECTURE.md)
 
 </div>
 
@@ -47,7 +47,7 @@ Every result satisfies the reconciliation rule:
 portions × ₹1,999  +  remaining  ==  original amount
 ```
 
-The unit tests assert this for every case.
+The unit tests assert this for every successful split.
 
 ## Features
 
@@ -94,64 +94,71 @@ Read more in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ---
 
-## Run it
+## Build and run
 
-### Option A — Android Studio (easiest)
+### Requirements
 
-1. Install the stable **Android Studio** from the official Android developer site.
-2. Install **JDK 17** (e.g. Eclipse Temurin 17).
-3. In **More Actions → SDK Manager**, install **Android 15 / API 35**,
-   **Build-Tools** and **Platform-Tools**.
-4. **File → Settings → Build, Execution, Deployment → Build Tools → Gradle**:
-   set **Gradle JDK** to your JDK 17.
-5. **File → Open** and select this folder (`D:\Coding\RupeeSplitter`).
-6. Wait for Gradle sync, then press **Run ▶**.
+| Tool | Version | Notes |
+| --- | --- | --- |
+| [Android Studio](https://developer.android.com/studio) | Latest stable | Bundles the JDK that Gradle uses — **no separate JDK install needed** |
+| Android SDK Platform | 37 | Install with SDK Manager; downloads automatically |
+| Android SDK Build-Tools | 36.0.0 | Downloads automatically if missing |
+| Gradle | 9.8.0 | Provided by the wrapper (`gradlew`) |
+| Android Gradle Plugin | 9.4.1 | Declared in the root `build.gradle.kts` |
+| Kotlin | Bundled with AGP 9 | **Do not apply `org.jetbrains.kotlin.android`** — AGP 9 has built-in Kotlin support and applying it twice fails the build |
+| minSdk / targetSdk | 24 / 37 | Android 7.0 → Android 15+ |
 
-> The project uses Android Gradle Plugin 8.7.3 with Gradle 8.9, which need **JDK 17**.
-> Do not point Gradle at a Java 25 runtime — Gradle 8.9 does not support it.
+> This project was verified with **JDK 17** and with **Android Studio's bundled JDK (Java 25)**.
+> Gradle 9.8 supports Java 17–27, so the default Gradle JDK in Android Studio works out of the box.
 
-### Option B — Command line (Windows PowerShell)
+### 1. Open the project
 
-```powershell
-# 1. Tell Gradle which JDK to use (JDK 17)
-$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-17"
+**File → Open**, select the `RupeeSplitter` folder, and wait for the Gradle sync to finish.
 
-# 2. Build a debug APK
-.\gradlew.bat assembleDebug
+### 2. Run the app
 
-# 3. Run unit tests, Android lint and the build in one go
-.\gradlew.bat testDebugUnitTest lintDebug assembleDebug
+1. Pick a device: start an emulator from **Device Manager**, or plug in a phone with USB debugging on.
+2. Press **Run ▶**.
+
+Or from a terminal:
+
+```bash
+./gradlew installDebug     # Windows: .\gradlew.bat installDebug
 ```
 
-The wrapper downloads Gradle 8.9 automatically on the first run.
+### 3. Build an APK
 
-**Output:**
+**Debug APK (quick, for testing):** **Build → Build Bundle(s) / APK(s) → Build APK(s)**, or
 
-```text
-app\build\outputs\apk\debug\app-debug.apk
+```bash
+./gradlew assembleDebug        # Windows: .\gradlew.bat assembleDebug
 ```
 
-Copy that APK to any Android phone to install it (allow installs from your file
-manager when asked).
+Output: `app/build/outputs/apk/debug/app-debug.apk`. Copy it to a phone and open it to install.
+
+**Release APK (signed, for sharing):** **Build → Generate Signed App Bundle / APK → APK**, create or
+choose a keystore, pick **release**, and finish. The APK lands in `app/release/`.
+
+Or from the command line, with a keystore you already have:
+
+```bash
+KEYSTORE_PATH=/path/to/key.jks KEYSTORE_PASSWORD=... KEY_ALIAS=... KEY_PASSWORD=... \
+  ./gradlew assembleRelease
+```
+
+Without those variables the release build is unsigned and Android will refuse to install it.
+Never commit a keystore.
 
 ## Testing
 
 | Command | What it checks |
 | --- | --- |
-| `.\gradlew.bat testDebugUnitTest` | Splitting, parsing, formatting, reconciliation |
-| `.\gradlew.bat lintDebug` | Android lint, resource and API problems |
-| `.\gradlew.bat assembleDebug` | Compiles and packages the APK |
+| `./gradlew testDebugUnitTest` | Splitting, parsing, formatting, reconciliation (JVM, no device) |
+| `./gradlew lintDebug` | Android lint |
+| `./gradlew connectedDebugAndroidTest` | UI smoke tests on a running emulator or device |
 
-The unit tests cover exact portions, remainders, decimals, zero, malformed input,
-Indian grouping, very large amounts, copy/share text and exact total reconciliation.
-
-Every test ends with:
-
-```kotlin
-assertEquals(result.originalPaise, result.calculatedTotalPaise)
-```
-
-That single assertion guarantees the app can never invent or lose money.
+Every calculation test also asserts `originalPaise == calculatedTotalPaise`, so the app can never
+invent or lose money.
 
 ## Project structure
 
@@ -165,9 +172,10 @@ RupeeSplitter/
 │   ├── src/main/res/
 │   │   ├── layout/                      # activity_main + result rows
 │   │   ├── drawable/                    # logo, icons, gradients
-│   │   ├── values/   values-night/      # colours, strings, sizes, themes
+│   │   ├── values/   values-night/      # colours, strings and themes
 │   │   └── mipmap-*/                    # launcher icons (all densities)
-│   └── src/test/                        # unit tests
+│   ├── src/test/                        # unit tests
+│   └── src/androidTest/                 # UI smoke tests
 ├── docs/                                # architecture, privacy, brand
 ├── tools/generate_launcher_icons.ps1    # regenerates the app icon
 └── README.md
@@ -184,19 +192,19 @@ RupeeSplitter/
 
 ## Accessibility
 
-- Every control has a label and a content description.
+- Controls carry labels; decorative images are hidden from screen readers.
 - Errors are announced through an accessibility live region.
 - Touch targets are at least 48dp.
-- Text respects the system font scale and colours meet WCAG AA contrast.
+- Text respects the system font scale and text colours are chosen for readable contrast.
 
 ## Troubleshooting
 
 | Problem | Fix |
 | --- | --- |
-| `Unsupported class file major version 69` | Gradle is using Java 25. Set `JAVA_HOME` to a JDK 17. |
+| `Unsupported class file major version` | Gradle needs Java 17–27. Set **Settings → Build Tools → Gradle → Gradle JDK** to Android Studio's bundled JDK. |
 | `SDK location not found` | Create `local.properties` with `sdk.dir=C\:\\path\\to\\Sdk`. |
-| `Build Tools revision ... is too low` | Install the Build-Tools version pinned in `app/build.gradle.kts`. |
-| `style attribute not found` | Run `.\gradlew.bat clean`, then sync again. |
+| `Failed to find target with hash string 'android-37'` | Install **Android SDK Platform 37** in the SDK Manager. |
+| `Cannot add extension with name 'kotlin'` | You applied `org.jetbrains.kotlin.android`. Remove it — AGP 9 already provides Kotlin support. |
 
 ## Documentation
 
@@ -206,8 +214,17 @@ RupeeSplitter/
 | [docs/PRIVACY.md](docs/PRIVACY.md) | The offline and privacy guarantee |
 | [docs/BRAND.md](docs/BRAND.md) | Name, logo, colour palette, typography |
 
-## Licence
+## License
 
-Provided as-is for personal and educational use. Review it before shipping it to
-production.
+Licensed under the [MIT License](LICENSE).
+
+## Contributing
+
+Keep it offline, dependency-light and covered by tests. Before opening a pull request, run:
+
+```bash
+./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease
+```
+
+`lintDebug` should report **No issues found** and every test must pass.
 

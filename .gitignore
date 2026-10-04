@@ -1,19 +1,14 @@
 # Android Studio / IntelliJ
 .idea/
 *.iml
+.DS_Store
 
-# Local Android SDK configuration
+# Local SDK location — machine specific, never commit
 local.properties
 
-# Gradle and build output
+# Gradle, Kotlin and build outputs (regenerated automatically)
 .gradle/
 .kotlin/
 build/
 app/build/
 
-# Temporary local verification artifacts
-.verification/
-
-# Local scratch files (generated while validating)
-_*.txt
-README.md.new

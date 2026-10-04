@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!--
-      Material 3 light theme.
-      Note: android:windowLightNavigationBar is applied in code (API 27+) so that
-      minSdk 24 devices are unaffected and Android lint stays happy.
-    -->
+    <!-- Material 3 theme. System-bar icon contrast is set in MainActivity. -->
     <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryVariant">@color/primary_variant</item>
@@ -40,7 +36,6 @@
 
         <item name="android:statusBarColor">@color/background</item>
         <item name="android:navigationBarColor">@color/background</item>
-        <!-- Light/dark system-bar icons are applied in MainActivity (WindowCompat). -->
         <item name="android:windowBackground">@color/background</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionModeOverlay">true</item>

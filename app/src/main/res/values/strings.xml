@@ -7,8 +7,8 @@
     <string name="rupee_symbol">₹</string>
 
     <!-- Input -->
-    <string name="placeholder_amount">0.00</string>
     <string name="label_enter_amount">ENTER AMOUNT</string>
+    <string name="placeholder_amount">0.00</string>
     <string name="label_quick_amounts">Quick amounts</string>
     <string name="chip_amount_format">%1$s%2$s</string>
 
@@ -25,8 +25,8 @@
     <string name="empty_state_subtitle">Type it, or pick a quick amount above</string>
     <string name="zero_state_title">Amount is zero</string>
     <string name="zero_state_subtitle">Enter a value greater than ₹0</string>
-    <string name="error_state_title">Invalid amount</string>
-    <string name="error_state_subtitle">Try a value like 10,000 or 1,00,000</string>
+    <string name="error_empty_amount">Enter an amount to split.</string>
+    <string name="error_invalid_amount">Enter a valid amount, like 10,000.</string>
 
     <!-- Result summary -->
     <string name="summary_total_label">TOTAL AMOUNT</string>
@@ -40,13 +40,12 @@
     <string name="breakdown_compact_note">A compact view is shown for more than %1$s parts to keep the app fast. Copied and shared text always includes the full summary.</string>
 
     <!-- Footer -->
-    <string name="footer_note">Works fully offline • No account • No internet • Nothing leaves your device</string>
+    <string name="footer_note">Works fully offline • No account • No internet</string>
 
     <!-- Accessibility -->
     <string name="a11y_amount_input">Amount in Indian rupees</string>
-    <string name="a11y_calculate_button">Calculate split</string>
+    <string name="a11y_final_remainder">final remainder</string>
     <string name="a11y_copy_button">Copy breakdown</string>
     <string name="a11y_share_button">Share breakdown</string>
     <string name="a11y_quick_amount_button">Set amount to %1$s</string>
-    <string name="a11y_result_area">Split results</string>
 </resources>

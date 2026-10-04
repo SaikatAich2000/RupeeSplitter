@@ -22,7 +22,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import com.example.rupeesplitter.databinding.ActivityMainBinding
 import com.example.rupeesplitter.databinding.ItemPaymentRowBinding
 import com.example.rupeesplitter.databinding.ViewDetailRowBinding
@@ -32,11 +35,7 @@ import com.example.rupeesplitter.databinding.ViewSummaryBinding
 import java.math.BigInteger
 
 /**
- * The single, fully-offline screen of Rupee Splitter.
- *
- * All behaviour is local: parsing and splitting live in [SplitCalculator], text
- * rendering in [RupeeFormatter] and [BreakdownTextFormatter]. This activity only
- * turns that pure state into animated Material 3 views.
+ * The offline calculator screen. Parsing and splitting are kept outside the UI.
  */
 class MainActivity : AppCompatActivity() {
 
@@ -51,6 +50,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         applySystemBarStyle()
+        applyWindowInsets()
 
         setupQuickAmounts()
         setupInput()
@@ -81,6 +81,28 @@ class MainActivity : AppCompatActivity() {
         controller.isAppearanceLightNavigationBars = !isNight
     }
 
+    /** Targeting API 35+ draws edge-to-edge, so the content must keep clear of bars, cutouts and the keyboard. */
+    private fun applyWindowInsets() {
+        val content = binding.content
+        val start = content.paddingLeft
+        val top = content.paddingTop
+        val end = content.paddingRight
+        val bottom = content.paddingBottom
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
+            val bars = windowInsets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
+            val ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
+            content.updatePadding(
+                left = start + bars.left,
+                top = top + bars.top,
+                right = end + bars.right,
+                bottom = bottom + maxOf(bars.bottom, ime.bottom)
+            )
+            windowInsets
+        }
+    }
+
     private fun setupInput() {
         binding.amountInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
@@ -96,7 +118,7 @@ class MainActivity : AppCompatActivity() {
             hideKeyboard()
             formatInputIfValid()
             render(showErrors = true, animate = true)
-            false
+            true
         }
 
         binding.amountInput.setOnFocusChangeListener { _, hasFocus ->
@@ -130,6 +152,7 @@ class MainActivity : AppCompatActivity() {
         typeface = Typeface.DEFAULT_BOLD
         gravity = Gravity.CENTER
         setPadding(dp(16), dp(10), dp(16), dp(10))
+        minHeight = dp(48)
         isClickable = true
         isFocusable = true
         background = RippleDrawable(
@@ -153,6 +176,7 @@ class MainActivity : AppCompatActivity() {
     private fun render(showErrors: Boolean, animate: Boolean) {
         val state = calculator.calculate(binding.amountInput.text?.toString().orEmpty())
         currentResult = (state as? CalculationState.Success)?.result
+        binding.amountLayout.error = validationMessage(state, showErrors)
 
         val signature = signatureOf(state, showErrors)
         if (signature == lastSignature) return
@@ -169,30 +193,34 @@ class MainActivity : AppCompatActivity() {
             "S:${state.result.originalPaise}:${state.result.fullPortions}:${state.result.remainderPaise}"
         is CalculationState.Empty -> "E"
         is CalculationState.Zero -> "Z:$showErrors"
-        is CalculationState.Invalid -> "I:$showErrors"
+        is CalculationState.Invalid -> "I"
     }
 
     private fun contentFor(state: CalculationState, showErrors: Boolean): View = when (state) {
         is CalculationState.Success -> buildResult(state.result)
-        is CalculationState.Zero -> placeholder(
-            iconRes = R.drawable.ic_split,
-            titleRes = if (showErrors) R.string.zero_state_title else R.string.empty_state_title,
-            messageRes = if (showErrors) R.string.zero_state_subtitle else R.string.empty_state_subtitle,
-            tintRes = R.color.primary
-        )
-        is CalculationState.Invalid -> if (showErrors) {
-            placeholder(R.drawable.ic_error, R.string.error_state_title, R.string.error_state_subtitle, R.color.error)
+        is CalculationState.Zero -> if (showErrors) {
+            placeholder(R.string.zero_state_title, R.string.zero_state_subtitle)
         } else {
-            placeholder(R.drawable.ic_split, R.string.empty_state_title, R.string.empty_state_subtitle, R.color.primary)
+            emptyPlaceholder()
         }
-        is CalculationState.Empty ->
-            placeholder(R.drawable.ic_split, R.string.empty_state_title, R.string.empty_state_subtitle, R.color.primary)
+        is CalculationState.Empty -> emptyPlaceholder()
+        is CalculationState.Invalid -> emptyPlaceholder()
     }
 
-    private fun placeholder(iconRes: Int, titleRes: Int, messageRes: Int, tintRes: Int): View {
+    private fun emptyPlaceholder(): View =
+        placeholder(R.string.empty_state_title, R.string.empty_state_subtitle)
+
+    private fun validationMessage(state: CalculationState, showErrors: Boolean): String? = when {
+        !showErrors -> null
+        state is CalculationState.Empty -> getString(R.string.error_empty_amount)
+        state is CalculationState.Invalid -> getString(R.string.error_invalid_amount)
+        else -> null
+    }
+
+    private fun placeholder(titleRes: Int, messageRes: Int): View {
         val view = ViewPlaceholderBinding.inflate(layoutInflater, binding.resultContainer, false)
-        view.stateIcon.setImageResource(iconRes)
-        view.stateIcon.imageTintList = ColorStateList.valueOf(color(tintRes))
+        view.stateIcon.setImageResource(R.drawable.ic_split)
+        view.stateIcon.imageTintList = ColorStateList.valueOf(color(R.color.primary))
         view.stateTitle.setText(titleRes)
         view.stateMessage.setText(messageRes)
         return view.root
@@ -234,7 +262,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun addDetailedRows(target: LinearLayout, result: SplitResult) {
         var number = BigInteger.ONE
-        repeat(result.fullPortions.toInt()) {
+        repeat(result.fullPortions.coerceAtMost(DETAIL_ROW_LIMIT).toInt()) {
             target.addView(
                 paymentRow(
                     getString(R.string.row_portion_label, RupeeFormatter.count(number)),
@@ -259,10 +287,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun addCompactRows(target: LinearLayout, result: SplitResult) {
         target.addView(
-            detailRow(
-                getString(R.string.summary_portions),
-                "${SplitCalculator.RUPEE_SYMBOL}1,999 × ${RupeeFormatter.count(result.fullPortions)}"
-            ),
+            detailRow(getString(R.string.summary_portions), RupeeFormatter.count(result.fullPortions)),
             rowParams()
         )
         if (result.remainderPaise != BigInteger.ZERO) {
@@ -283,7 +308,7 @@ class MainActivity : AppCompatActivity() {
             append(label)
             append(", ")
             append(amount)
-            if (isRemainder) append(", final remainder")
+            if (isRemainder) append(", ").append(getString(R.string.a11y_final_remainder))
         }
         return view.root
     }

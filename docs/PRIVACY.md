@@ -10,13 +10,12 @@ app does — and does not — do.
 - No accounts, no sign-in.
 - No analytics, telemetry, crash reporting or advertising.
 - No cloud sync and no cloud backup.
-- Nothing you type ever leaves your device.
+- Nothing is sent automatically; sharing is only initiated by you.
 
 ## Permissions
 
 The app declares **zero** permissions. In particular it does **not** request
-`android.permission.INTERNET`, so it is technically unable to open a network
-connection even if a future bug tried to.
+`android.permission.INTERNET`, and the source contains no networking client.
 
 ```xml
 <!-- app/src/main/AndroidManifest.xml -->
@@ -29,9 +28,9 @@ Nowhere permanent. The amount you type is held in memory only. It is never writt
 disk, never stored in a database and never included in Android backups:
 
 - `android:allowBackup="false"`
-- `res/xml/backup_rules.xml` → exclude everything
+- `res/xml/backup_rules.xml` → exclude everything (Android 11 and lower)
 - `res/xml/data_extraction_rules.xml` → exclude everything for cloud backup and
-  device transfer
+  device transfer (Android 12+)
 
 On rotation, Android may keep the current amount in the private saved-instance bundle
 so the screen is not reset. That bundle lives only for the current session.

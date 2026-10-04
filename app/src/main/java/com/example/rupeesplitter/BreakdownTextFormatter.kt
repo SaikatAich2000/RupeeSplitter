@@ -14,9 +14,9 @@ object BreakdownTextFormatter {
             appendLine()
 
             if (result.totalParts <= detailedRowLimit) {
-                appendDetailedPayments(result)
+                appendDetailedPayments(result, detailedRowLimit)
             } else {
-                appendLine("₹1,999 Portions: ${RupeeFormatter.count(result.fullPortions)}")
+                appendLine("${RupeeFormatter.money(SplitCalculator.CHUNK_PAISE)} Portions: ${RupeeFormatter.count(result.fullPortions)}")
                 appendLine("Remaining: ${RupeeFormatter.money(result.remainderPaise)}")
                 appendLine("Detailed rows are compacted for large results.")
             }
@@ -27,10 +27,10 @@ object BreakdownTextFormatter {
         }
     }
 
-    private fun StringBuilder.appendDetailedPayments(result: SplitResult) {
+    private fun StringBuilder.appendDetailedPayments(result: SplitResult, limit: BigInteger) {
         var paymentNumber = BigInteger.ONE
-        repeat(result.fullPortions.toInt()) {
-            appendLine("Payment ${RupeeFormatter.count(paymentNumber)}: ₹1,999")
+        repeat(result.fullPortions.coerceAtMost(limit).toInt()) {
+            appendLine("Payment ${RupeeFormatter.count(paymentNumber)}: ${RupeeFormatter.money(SplitCalculator.CHUNK_PAISE)}")
             paymentNumber += BigInteger.ONE
         }
         if (result.remainderPaise != BigInteger.ZERO) {
