@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 11 and lower: exclude all app data from backup. -->
+<!-- Android 11 and lower: back up only the theme preference. Listing an include excludes everything else. -->
 <full-backup-content>
-    <exclude domain="root" path="." />
+    <include domain="sharedpref" path="rupee_splitter_settings.xml" />
 </full-backup-content>

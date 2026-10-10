@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 12+: back up only the small theme-preference file. -->
+<!-- Android 12+: back up and transfer only the theme preference. Listing an include excludes everything else. -->
 <data-extraction-rules>
     <cloud-backup>
         <include domain="sharedpref" path="rupee_splitter_settings.xml" />
-        <exclude domain="database" />
-        <exclude domain="file" />
-        <exclude domain="external" />
     </cloud-backup>
     <device-transfer>
-        <exclude domain="root" path="." />
+        <include domain="sharedpref" path="rupee_splitter_settings.xml" />
     </device-transfer>
 </data-extraction-rules>

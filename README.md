@@ -58,7 +58,9 @@ The unit tests assert this for every successful split.
 - **Smooth UI** — Material 3, 250 ms fade-and-rise transitions, ripple feedback.
 - **Large-amount safe** — lists are capped so even a ₹10¹⁰⁰ amount stays fast.
 - **Accessible** — labelled controls, content descriptions, live-region announcements.
-- **Offline & private** — **zero permissions**, no internet, no analytics, no account.
+- **Offline & private** — **zero permissions**, no internet, no analytics, no account. The only thing the app
+  stores is your light/dark choice, and that one setting is the only thing included in Android backups and
+  device transfers. Amounts you type are never saved.
 
 ## How it works
 
@@ -99,14 +101,28 @@ flowchart LR
 ### Open and build
 
 ```bash
-git clone https://github.com/your-org/RupeeSplitter.git
+git clone https://github.com/SaikatAich2000/RupeeSplitter.git
 cd RupeeSplitter
-./gradlew assembleDebug
+./gradlew assembleDebug        # Windows: .\gradlew.bat assembleDebug
 ```
 
-Or open in Android Studio → **Run ▸ Run 'app'**.
+### Run in Android Studio
 
-### Signed release build (optional)
+1. **File → Open** and select the project folder, then wait for the Gradle sync to finish.
+2. Pick a device in the toolbar: an emulator from **Device Manager**, or a phone with USB debugging on.
+3. Press **Run ▶**.
+
+### Create an APK
+
+**Debug APK** (for trying it on your own phone): **Build → Generate App Bundles or APKs → Generate APKs**
+(older versions: **Build → Build Bundle(s) / APK(s) → Build APK(s)**), or `./gradlew assembleDebug`.
+Output: `app/build/outputs/apk/debug/app-debug.apk`.
+
+**Signed release APK** (for sharing): **Build → Generate Signed App Bundle or APK → APK**, create or choose a
+keystore, select **release** and finish. Output: `app/release/app-release.apk`. Keep the keystore safe; every
+future update must be signed with the same one.
+
+### Signed release build from the command line
 
 From the command line, with a keystore you already have:
 
@@ -124,9 +140,39 @@ Never commit a keystore.
 | --- | --- |
 | `./gradlew testDebugUnitTest` | Splitting, parsing, formatting, reconciliation (JVM, no device) |
 | `./gradlew lintDebug` | Android lint |
-| `./gradlew connectedDebugAndroidTest` | UI smoke tests on a running emulator or device |
+| `./gradlew connectedDebugAndroidTest` | UI tests on a running emulator or device |
 
 Every calculation test also asserts `originalPaise == calculatedTotalPaise`, so the app can never invent or lose money.
+
+### Coverage and SonarQube
+
+Coverage instrumentation is off by default and switched on with `-Pcoverage`, so ordinary debug builds are unaffected.
+
+```bash
+# 1. Unit + instrumented coverage reports (needs a running emulator or device)
+./gradlew -Pcoverage createDebugUnitTestCoverageReport createDebugAndroidTestCoverageReport lintDebug
+
+# 2. Analysis, as a separate step so it reads the finished reports
+SONAR_HOST_URL=http://localhost:9000 SONAR_TOKEN=<your token> ./gradlew -Pcoverage sonar
+```
+
+A local server is one command: `docker run -d --name sonarqube -p 9000:9000 sonarqube:community`. Create a project with
+the key `rupee-splitter` and generate a token for it. The token is only ever passed on the command line; never commit it.
+
+The project is kept at **0 open issues** and **above 95% coverage** (unit and instrumented reports combined).
+
+### Dependencies
+
+- Versions live in one place: `gradle/libs.versions.toml`.
+- Every downloaded artifact is checked against the SHA-256 checksums in `gradle/verification-metadata.xml`.
+  By default a mismatch is reported as a warning, so an IDE-only download can never break a sync. To make a
+  tampered or swapped dependency fail the build, add `--dependency-verification strict` (recommended for release builds).
+- After changing a version, refresh the checksums by re-running the tasks you use with the write flag, then review the
+  diff before committing:
+
+```bash
+./gradlew --write-verification-metadata sha256 assembleDebug assembleRelease testDebugUnitTest lintDebug
+```
 
 ## Project structure
 
@@ -143,14 +189,17 @@ RupeeSplitter/
 │   │   ├── values/   values-night/      # colours, strings and themes
 │   │   └── mipmap-*/                    # launcher icons (all densities)
 │   ├── src/test/                        # unit tests
-│   └── src/androidTest/                 # UI smoke tests
+│   └── src/androidTest/                 # UI tests (Espresso)
+├── gradle/
+│   ├── libs.versions.toml               # dependency and plugin versions
+│   └── verification-metadata.xml        # dependency checksums
 └── README.md
 ```
 
 ## Performance
 
 - Money is stored as `BigInteger` paise — exact and cheap.
-- Results rebuild only when the split actually changes (a *signature guard*), not on every keystroke.
+- Results rebuild only when what is shown would change, not on every keystroke.
 - Detailed lists stop at **100 rows**; bigger splits switch to a compact summary.
 - Copy / share text stops at **200 rows**, then compacts.
 - Release builds use **R8 minification + resource shrinking**.
@@ -170,10 +219,11 @@ RupeeSplitter/
 | `SDK location not found` | Create `local.properties` with `sdk.dir=C:\path\to\Sdk`. |
 | `Failed to find target with hash string 'android-37'` | Install **Android SDK Platform 37** in the SDK Manager. |
 | `Cannot add extension with name 'kotlin'` | You applied `org.jetbrains.kotlin.android`. Remove it — AGP 9 already provides Kotlin support. |
+| `Dependency verification failed` (strict mode) | A dependency changed or is new. If you changed it on purpose, refresh the checksums as described under [Dependencies](#dependencies). |
 
 ## License
 
-Licensed under the [MIT License](https://opensource.org/licenses/MIT).
+Licensed under the [MIT License](LICENSE).
 
 ## Contributing
 
@@ -183,4 +233,5 @@ Keep it offline, dependency-light and covered by tests. Before opening a pull re
 ./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease
 ```
 
-`lintDebug` should report **No issues found** and every test must pass.
+`lintDebug` should report **No issues found** and every test must pass. With an emulator running, also run
+`./gradlew connectedDebugAndroidTest`.

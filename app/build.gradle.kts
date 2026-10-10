@@ -1,5 +1,5 @@
 plugins {
-    id("com.android.application")
+    alias(libs.plugins.android.application)
 }
 
 android {
@@ -37,6 +37,10 @@ android {
             signingConfig = signingConfigs.findByName("release")
         }
         debug {
+            // Coverage instrumentation is opt-in (-Pcoverage) so ordinary debug builds stay untouched.
+            val coverage = providers.gradleProperty("coverage").isPresent
+            enableUnitTestCoverage = coverage
+            enableAndroidTestCoverage = coverage
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
         }
@@ -45,16 +49,21 @@ android {
     buildFeatures {
         viewBinding = true
     }
+
+    testOptions {
+        animationsDisabled = true
+    }
 }
 
 dependencies {
-    implementation("androidx.appcompat:appcompat:1.8.0")
-    implementation("androidx.core:core-ktx:1.19.1")
-    implementation("com.google.android.material:material:1.14.0")
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.material)
 
-    testImplementation("junit:junit:4.13.2")
+    testImplementation(libs.junit)
 
-    androidTestImplementation("androidx.test.ext:junit:1.3.0")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
-    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.espresso.core)
+    androidTestImplementation(libs.androidx.test.espresso.intents)
+    androidTestImplementation(libs.androidx.test.runner)
 }

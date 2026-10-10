@@ -3,6 +3,7 @@ package com.example.rupeesplitter
 import java.math.BigInteger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -106,6 +107,41 @@ class SplitCalculatorTest {
             "100,"
         ).forEach { input ->
             assertFalse("$input should not calculate", calculator.calculate(input) is CalculationState.Success)
+        }
+    }
+
+    @Test
+    fun `input longer than the supported length is invalid`() {
+        assertTrue(calculator.calculate("9".repeat(105)) is CalculationState.Invalid)
+    }
+
+    @Test
+    fun `shared breakdown without a remainder lists only full portions`() {
+        val text = BreakdownTextFormatter.format(success("3998"), BigInteger("200"))
+        assertTrue(text.contains("Payment 2: ₹1,999"))
+        assertFalse(text.contains("Payment 3:"))
+    }
+
+    @Test
+    fun `shared breakdown rejects a row limit that is not positive`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            BreakdownTextFormatter.format(success("10000"), BigInteger.ZERO)
+        }
+    }
+
+    @Test
+    fun `a split result rejects negative amounts and zero parts`() {
+        val one = BigInteger.ONE
+        val negative = BigInteger("-1")
+        listOf(
+            listOf(negative, one, one, one),
+            listOf(one, negative, one, one),
+            listOf(one, one, negative, one),
+            listOf(one, one, one, BigInteger.ZERO)
+        ).forEach { (original, portions, remainder, parts) ->
+            assertThrows(IllegalArgumentException::class.java) {
+                SplitResult(original, portions, remainder, parts)
+            }
         }
     }
 

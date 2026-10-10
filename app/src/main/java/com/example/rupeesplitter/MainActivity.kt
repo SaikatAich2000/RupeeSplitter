@@ -27,6 +27,7 @@ import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import com.example.rupeesplitter.databinding.ActivityMainBinding
 import com.example.rupeesplitter.databinding.ItemPaymentRowBinding
@@ -44,8 +45,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val calculator = SplitCalculator()
 
-    private var currentResult: SplitResult? = null
-    private var lastSignature: String? = null
+    private var lastRendered: Pair<CalculationState, Boolean>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         applySavedTheme()
@@ -61,17 +61,7 @@ class MainActivity : AppCompatActivity() {
         setupActions()
         setupThemeToggle()
 
-        val restored = savedInstanceState?.getString(STATE_AMOUNT).orEmpty()
-        if (restored.isNotEmpty()) {
-            binding.amountInput.setText(restored)
-            binding.amountInput.setSelection(restored.length)
-        }
         render(showErrors = false, animate = false)
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        outState.putString(STATE_AMOUNT, binding.amountInput.text?.toString().orEmpty())
-        super.onSaveInstanceState(outState)
     }
 
     /**
@@ -79,8 +69,7 @@ class MainActivity : AppCompatActivity() {
      * Done in code so `minSdk 24` devices never see an API-27 attribute.
      */
     private fun applySystemBarStyle() {
-        val isNight = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-            Configuration.UI_MODE_NIGHT_YES
+        val isNight = isDarkThemeActive()
         val controller = WindowCompat.getInsetsController(window, window.decorView)
         controller.isAppearanceLightStatusBars = !isNight
         controller.isAppearanceLightNavigationBars = !isNight
@@ -89,21 +78,19 @@ class MainActivity : AppCompatActivity() {
     /** Targeting API 35+ draws edge-to-edge, so the content must keep clear of bars, cutouts and the keyboard. */
     private fun applyWindowInsets() {
         val content = binding.content
-        val start = content.paddingLeft
-        val top = content.paddingTop
-        val end = content.paddingRight
         val bottom = content.paddingBottom
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { scroll, windowInsets ->
             val bars = windowInsets.getInsets(
                 WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
             )
             val ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
-            content.updatePadding(
-                left = start + bars.left,
-                top = top + bars.top,
-                right = end + bars.right,
-                bottom = bottom + maxOf(bars.bottom, ime.bottom)
-            )
+            // The scroll view stops short of the status bar, so scrolled content never slides under its icons.
+            scroll.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                leftMargin = bars.left
+                topMargin = bars.top
+                rightMargin = bars.right
+            }
+            content.updatePadding(bottom = bottom + maxOf(bars.bottom, ime.bottom))
             windowInsets
         }
     }
@@ -120,9 +107,7 @@ class MainActivity : AppCompatActivity() {
         })
 
         binding.amountInput.setOnEditorActionListener { _, _, _ ->
-            hideKeyboard()
-            formatInputIfValid()
-            render(showErrors = true, animate = true)
+            submit()
             true
         }
 
@@ -177,15 +162,10 @@ class MainActivity : AppCompatActivity() {
         get() = getSharedPreferences(THEME_PREFS_NAME, Context.MODE_PRIVATE)
 
     private fun setupActions() {
-        binding.calculateButton.setOnClickListener {
-            hideKeyboard()
-            formatInputIfValid()
-            render(showErrors = true, animate = true)
-        }
+        binding.calculateButton.setOnClickListener { submit() }
         binding.resetButton.setOnClickListener {
-            binding.amountInput.text?.clear()
+            binding.amountInput.setText("")
             binding.amountInput.requestFocus()
-            render(showErrors = false, animate = true)
         }
     }
 
@@ -208,7 +188,6 @@ class MainActivity : AppCompatActivity() {
         setOnClickListener {
             binding.amountInput.setText(value)
             binding.amountInput.setSelection(value.length)
-            render(showErrors = false, animate = true)
         }
     }
 
@@ -217,42 +196,33 @@ class MainActivity : AppCompatActivity() {
 
     // ----- Result rendering -----
 
+    private fun amountText(): String = binding.amountInput.text.toString()
+
+    private fun submit() {
+        hideKeyboard()
+        formatInputIfValid()
+        render(showErrors = true, animate = true)
+    }
+
     private fun render(showErrors: Boolean, animate: Boolean) {
-        val state = calculator.calculate(binding.amountInput.text?.toString().orEmpty())
-        currentResult = (state as? CalculationState.Success)?.result
+        val state = calculator.calculate(amountText())
         binding.amountLayout.error = validationMessage(state, showErrors)
 
-        val signature = signatureOf(state, showErrors)
-        if (signature == lastSignature) return
-        lastSignature = signature
+        // Rebuild only when what is shown would change, not on every keystroke.
+        val showZero = showErrors && state is CalculationState.Zero
+        val rendered = state to showZero
+        if (rendered == lastRendered) return
+        lastRendered = rendered
 
-        val content = contentFor(state, showErrors)
+        val content = when {
+            state is CalculationState.Success -> buildResult(state.result)
+            showZero -> placeholder(R.string.zero_state_title, R.string.zero_state_subtitle)
+            else -> placeholder(R.string.empty_state_title, R.string.empty_state_subtitle)
+        }
         binding.resultContainer.removeAllViews()
         binding.resultContainer.addView(content)
         if (animate) animateIn(content)
     }
-
-    private fun signatureOf(state: CalculationState, showErrors: Boolean): String = when (state) {
-        is CalculationState.Success ->
-            "S:${state.result.originalPaise}:${state.result.fullPortions}:${state.result.remainderPaise}"
-        is CalculationState.Empty -> "E"
-        is CalculationState.Zero -> "Z:$showErrors"
-        is CalculationState.Invalid -> "I"
-    }
-
-    private fun contentFor(state: CalculationState, showErrors: Boolean): View = when (state) {
-        is CalculationState.Success -> buildResult(state.result)
-        is CalculationState.Zero -> if (showErrors) {
-            placeholder(R.string.zero_state_title, R.string.zero_state_subtitle)
-        } else {
-            emptyPlaceholder()
-        }
-        is CalculationState.Empty -> emptyPlaceholder()
-        is CalculationState.Invalid -> emptyPlaceholder()
-    }
-
-    private fun emptyPlaceholder(): View =
-        placeholder(R.string.empty_state_title, R.string.empty_state_subtitle)
 
     private fun validationMessage(state: CalculationState, showErrors: Boolean): String? = when {
         !showErrors -> null
@@ -297,8 +267,8 @@ class MainActivity : AppCompatActivity() {
         container.addView(breakdown)
 
         val actions = ViewResultActionsBinding.inflate(layoutInflater, container, false)
-        actions.copyButton.setOnClickListener { copyBreakdown() }
-        actions.shareButton.setOnClickListener { shareBreakdown() }
+        actions.copyButton.setOnClickListener { copyBreakdown(result) }
+        actions.shareButton.setOnClickListener { shareBreakdown(result) }
         container.addView(actions.root)
 
         return container
@@ -398,8 +368,7 @@ class MainActivity : AppCompatActivity() {
 
     // ----- Clipboard, sharing and helpers -----
 
-    private fun copyBreakdown() {
-        val result = currentResult ?: return
+    private fun copyBreakdown(result: SplitResult) {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(
             ClipData.newPlainText(getString(R.string.app_name), sharedText(result))
@@ -407,8 +376,7 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, R.string.toast_copied, Toast.LENGTH_SHORT).show()
     }
 
-    private fun shareBreakdown() {
-        val result = currentResult ?: return
+    private fun shareBreakdown(result: SplitResult) {
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, sharedText(result))
@@ -420,11 +388,10 @@ class MainActivity : AppCompatActivity() {
         BreakdownTextFormatter.format(result, COPY_DETAIL_LIMIT)
 
     private fun formatInputIfValid() {
-        val success = calculator.calculate(binding.amountInput.text?.toString().orEmpty())
-            as? CalculationState.Success ?: return
+        val success = calculator.calculate(amountText()) as? CalculationState.Success ?: return
         val formatted = RupeeFormatter.money(success.result.originalPaise)
             .removePrefix(SplitCalculator.RUPEE_SYMBOL)
-        if (binding.amountInput.text?.toString() != formatted) {
+        if (amountText() != formatted) {
             binding.amountInput.setText(formatted)
             binding.amountInput.setSelection(formatted.length)
         }
@@ -448,7 +415,6 @@ class MainActivity : AppCompatActivity() {
     private companion object {
         const val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
         const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
-        const val STATE_AMOUNT = "state_amount"
         const val ANIM_DURATION_MS = 250L
         const val THEME_PREFS_NAME = "rupee_splitter_settings"
         const val THEME_IS_DARK_KEY = "theme_is_dark"

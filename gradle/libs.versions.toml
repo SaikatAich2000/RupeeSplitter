@@ -1,0 +1,24 @@
+[versions]
+agp = "9.4.1"
+sonarqube = "7.5.0.8588"
+appcompat = "1.8.0"
+coreKtx = "1.19.1"
+material = "1.14.0"
+junit = "4.13.2"
+androidxTestExtJunit = "1.3.0"
+androidxTestRunner = "1.7.0"
+espresso = "3.7.0"
+
+[libraries]
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestExtJunit" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
+androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
+androidx-test-espresso-intents = { group = "androidx.test.espresso", name = "espresso-intents", version.ref = "espresso" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
